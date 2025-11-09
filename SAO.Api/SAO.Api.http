@@ -1,0 +1,6 @@
+@SAO.Api_HostAddress = http://localhost:5022
+
+GET {{SAO.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
