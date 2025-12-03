@@ -7,6 +7,7 @@ using SAO.Domain.Repository;
 using SAO.Infrastructure.Repositories.Api;
 using SAO.Infrastructure.Repositories.Csv;
 using SAO.Infrastructure.Repositories.Db;
+using SAO.Infrastructure.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -53,6 +54,7 @@ builder.Services.AddSingleton(sp =>
 
     return config;
 });
+builder.Services.AddScoped<DimensionLoaderService>();
 
 builder.Services.AddSingleton(ClassificationConfiguration.Default);
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -71,21 +73,26 @@ builder.Services.AddHostedService<Worker>();
 
 var host = builder.Build();
 
-
-Console.WriteLine("Verificando base de datos...");
+Console.WriteLine("Verificando Data Warehouse...");
 using (var scope = host.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var loader = scope.ServiceProvider.GetRequiredService<DimensionLoaderService>();
 
     try
     {
+        // Esto creará las tablas DIM_PRODUCTO, DIM_CLIENTE, etc.
         await context.Database.EnsureCreatedAsync();
-        Console.WriteLine("Base de datos lista");
+        Console.WriteLine("Esquema de base de datos verificado.");
+
+        // Ejecutar carga de dimensiones
+        Console.WriteLine("Iniciando carga de Dimensiones (CSV)...");
+        await loader.CargarDimensionesAsync();
+        Console.WriteLine("Carga de dimensiones finalizada.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error con la base de datos: {ex.Message}");
-        throw;
+        Console.WriteLine($"Error crítico: {ex.Message}");
     }
 }
 
