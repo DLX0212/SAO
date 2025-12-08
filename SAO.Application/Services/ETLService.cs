@@ -7,8 +7,6 @@ using SAO.Domain.Repository;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-
-
 namespace SAO.Application.Services
 {
     public class ETLService : IETLService
@@ -33,9 +31,7 @@ namespace SAO.Application.Services
             _config = config;
         }
 
-        /// <summary>
         /// Ejecuta el proceso ETL completo
-        /// </summary>
         public async Task<ETLResult> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -45,42 +41,42 @@ namespace SAO.Application.Services
 
             try
             {
-                // Validar configuración
                 if (!_config.IsValid(out var configError))
                 {
                     throw new ETLException($"Configuración inválida: {configError}");
                 }
 
-                // Iniciar transacción
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                // FASE 1: EXTRACCIÓN
                 _logger.LogInformation("FASE 1: Extrayendo datos de todas las fuentes...");
                 var extractedData = await ExtractAllDataAsync(result, cancellationToken);
                 result.TotalExtracted = extractedData.Count;
 
-                // FASE 2: TRANSFORMACIÓN (directa a entidades)
                 _logger.LogInformation("FASE 2: Transformando y limpiando datos...");
                 var opinions = TransformToOpinions(extractedData, result);
                 result.TotalTransformed = opinions.Count;
 
-                // FASE 3: CLASIFICACIÓN
                 _logger.LogInformation("FASE 3: Clasificando opiniones...");
                 ClassifyAllOpinions(opinions);
 
-                // FASE 4: CARGA
+                _logger.LogInformation("LIMPIEZA: Eliminando datos existentes en FACT_OPINION...");
+
+                await _unitOfWork.ClearFactTablesAsync(cancellationToken);
+
+                _logger.LogInformation("✓ Tabla de hechos limpiada correctamente.");
+
                 _logger.LogInformation("FASE 4: Cargando datos en la base de datos...");
                 var loaded = await LoadOpinionsAsync(opinions, cancellationToken);
                 result.TotalLoaded = loaded;
 
-                // Confirmar transacción
+
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 stopwatch.Stop();
                 result.DurationMs = stopwatch.ElapsedMilliseconds;
 
                 _logger.LogInformation(
-                    "========== ETL COMPLETADO EXITOSAMENTE ==========\n" +
+                    " ETL COMPLETADO EXITOSAMENTE\n" +
                     "Extraídos: {Extracted}\n" +
                     "Transformados: {Transformed}\n" +
                     "Cargados: {Loaded}\n" +
@@ -114,9 +110,7 @@ namespace SAO.Application.Services
             return result;
         }
 
-        /// <summary>
         /// Extrae datos de todas las fuentes configuradas
-        /// </summary>
         private async Task<List<Opinion>> ExtractAllDataAsync(
             ETLResult result,
             CancellationToken cancellationToken)
@@ -152,9 +146,7 @@ namespace SAO.Application.Services
             return allOpinions;
         }
 
-        /// <summary>
         /// Transforma y limpia las opiniones extraídas
-        /// </summary>
         private List<Opinion> TransformToOpinions(
             List<Opinion> extractedData,
             ETLResult result)
@@ -168,7 +160,7 @@ namespace SAO.Application.Services
                     // Limpiar comentario
                     opinion.Comentario = CleanComment(opinion.Comentario);
 
-                    // Validar
+                    // Validacion
                     if (!opinion.IsValid())
                     {
                         result.TotalErrors++;
@@ -189,9 +181,7 @@ namespace SAO.Application.Services
             return validOpinions;
         }
 
-        /// <summary>
         /// Clasifica todas las opiniones
-        /// </summary>
         private void ClassifyAllOpinions(List<Opinion> opinions)
         {
             foreach (var opinion in opinions)
@@ -209,9 +199,7 @@ namespace SAO.Application.Services
             _logger.LogInformation("✓ Clasificadas {Count} opiniones", opinions.Count);
         }
 
-        /// <summary>
         /// Carga las opiniones en la base de datos por lotes
-        /// </summary>
         private async Task<int> LoadOpinionsAsync(
             List<Opinion> opinions,
             CancellationToken cancellationToken)
@@ -241,9 +229,7 @@ namespace SAO.Application.Services
             return totalLoaded;
         }
 
-        /// <summary>
         /// Limpia un comentario: remueve espacios extras, saltos de línea
-        /// </summary>
         private string CleanComment(string comment)
         {
             if (string.IsNullOrWhiteSpace(comment))

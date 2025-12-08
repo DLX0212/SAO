@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore; 
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using SAO.Domain.Entities;
 using SAO.Domain.Repository;
-
 
 namespace SAO.Infrastructure.Repositories.Db
 {
@@ -65,11 +65,17 @@ namespace SAO.Infrastructure.Repositories.Db
             _transaction = null;
         }
 
+
+        public async Task ClearFactTablesAsync(CancellationToken cancellationToken = default)
+        {
+            await _context.Opiniones.ExecuteDeleteAsync(cancellationToken);
+        }
+
         public void Dispose()
         {
             _transaction?.Dispose();
             _context.Dispose();
         }
     }
-
 }
+
