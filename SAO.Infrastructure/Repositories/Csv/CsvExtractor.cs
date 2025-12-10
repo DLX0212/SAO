@@ -1,4 +1,5 @@
-﻿using CsvHelper;
+﻿using CsvHelper.Configuration.Attributes;
+using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -131,6 +132,7 @@ namespace SAO.Infrastructure.Repositories.Csv
         /// </summary>
         private class SurveyCsvRow
         {
+            [Name("IdOpinion")] 
             public string IdComment { get; set; } = string.Empty;
             public string? IdCliente { get; set; }
             public string? IdProducto { get; set; }

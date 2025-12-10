@@ -1,4 +1,4 @@
-﻿
+﻿using System;
 
 namespace SAO.Domain.Base
 {
@@ -6,10 +6,13 @@ namespace SAO.Domain.Base
     {
         public DateTime CreatedAt { get; set; }
 
-        public DateTime CreatedBy { get; set; }
 
-        public DateTime UpdatedAt { get; set; } 
-        public DateTime UpdatedBy { get; set; }
+        public string? CreatedBy { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
+
+        public string? UpdatedBy { get; set; }
 
         public bool IsActive { get; set; } = true;
 
@@ -18,6 +21,8 @@ namespace SAO.Domain.Base
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;
             IsActive = true;
+            CreatedBy = "System";
+            UpdatedBy = "System";
         }
     }
 }

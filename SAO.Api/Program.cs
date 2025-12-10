@@ -22,7 +22,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, sqlOptions =>
     {
         sqlOptions.CommandTimeout(120);
-        sqlOptions.EnableRetryOnFailure(maxRetryCount: 3);
+        // sqlOptions.EnableRetryOnFailure(maxRetryCount: 3);
     });
 });
 
